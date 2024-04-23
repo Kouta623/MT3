@@ -53,14 +53,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		MatrixScreenPrintf(0, 0, resultAdd, "Add");
-		MatrixScreenPrintf(0, kRowHeight*5, resultMultiply, "Multiply");
-		MatrixScreenPrintf(0, kRowHeight * 5*2, resultSubtract, "Subtract");
-		/*MatrixScreenPrintf(0, kRowHeight * 5 * 3, inverseM1, "inverseM1");
-		MatrixScreenPrintf(0, kRowHeight * 5 * 4, inverseM2, "inverseM2");
+		MatrixScreenPrintf(0, kRowHeight * 5, resultSubtract, "Subtract");
+		MatrixScreenPrintf(0, kRowHeight*5*2, resultMultiply, "Multiply");
+		MatrixScreenPrintf(0, kRowHeight * 5 * 3, inverseM1, "inverseM1");
 		MatrixScreenPrintf(0, kRowHeight * 5 * 4, inverseM2, "inverseM2");
 		MatrixScreenPrintf(kColumnWidth * 5, 0, transposeM1, "transposeM1");
 		MatrixScreenPrintf(kColumnWidth * 5, kRowHeight*5, transposeM2, "transposeM2");
-		MatrixScreenPrintf(kColumnWidth * 5, kRowHeight * 5*2, identity, "identity");*/
+		MatrixScreenPrintf(kColumnWidth * 5, kRowHeight * 5*2, identity, "identity");
 
 
 		///

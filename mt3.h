@@ -89,7 +89,7 @@ Vector3 Normalize(const Vector3& v) {
 
 //行列の加法
 Matrix4x4 Add(const Matrix4x4& m1, const Matrix4x4& m2) {
-    Matrix4x4 result;
+    Matrix4x4 result = {};
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -102,7 +102,7 @@ Matrix4x4 Add(const Matrix4x4& m1, const Matrix4x4& m2) {
 
 //行列の減法
 Matrix4x4 Subtract(const Matrix4x4& m1, const Matrix4x4& m2) {
-    Matrix4x4 result;
+    Matrix4x4 result = {};
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -115,7 +115,7 @@ Matrix4x4 Subtract(const Matrix4x4& m1, const Matrix4x4& m2) {
 
 //行列の積
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
-    Matrix4x4 result;
+    Matrix4x4 result = {};
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -131,18 +131,59 @@ Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
 
 //逆行列
 Matrix4x4 Invers(const Matrix4x4& m) {
-    Matrix4x4 result;
-    
-
-    return result;
+   
 }
 
 //転置行列
 Matrix4x4 Transpose(const Matrix4x4& m) {
    
+    Matrix4x4 result = {};
+
+    result.m[0][0] = m.m[0][0];
+    result.m[0][1]=m.m[1][0];
+    result.m[0][2]=m.m[2][0];
+    result.m[0][3]=m.m[3][0];
+
+    result.m[1][0] = m.m[0][1];
+    result.m[1][1] = m.m[1][1];
+    result.m[1][2] = m.m[2][1];
+    result.m[1][3] = m.m[3][1];
+
+    result.m[2][0] = m.m[0][2];
+    result.m[2][1] = m.m[1][2];
+    result.m[2][2] = m.m[2][2];
+    result.m[2][3] = m.m[3][2];
+
+    result.m[3][0] = m.m[0][3];
+    result.m[3][1] = m.m[1][3];
+    result.m[3][2] = m.m[2][3];
+    result.m[3][3] = m.m[3][3];
+
+    return result;
 }
 
 //単位行列
 Matrix4x4 MakeIdentity4x4() {
+
+    Matrix4x4 result = {};
+
+    result.m[0][0] = 1;
+    result.m[0][1] = 0;
+    result.m[0][2] = 0;
+    result.m[0][3] = 0;
+    result.m[1][0] = 0;
+    result.m[1][1] = 1;
+    result.m[1][2] = 0;
+    result.m[1][3] = 0;
+    result.m[2][0] = 0;
+    result.m[2][1] = 0;
+    result.m[2][2] = 1;
+    result.m[2][3] = 0;
+    result.m[3][0] = 0;
+    result.m[3][1] = 0;
+    result.m[3][2] = 0;
+    result.m[3][3] = 1;
+
+    return result;
 
 }
