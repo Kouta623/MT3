@@ -369,9 +369,9 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& translate) {
 	result.m[2][2] = 1.0f;
 	result.m[2][3] = 0.0f;
 
-	result.m[3][0] = translate.x;
-	result.m[3][1] = translate.y;
 	result.m[3][2] = translate.z;
+	result.m[3][1] = translate.y;
+	result.m[3][0] = translate.x;
 	result.m[3][3] = 1.0f;
 
 	return result;

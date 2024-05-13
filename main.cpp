@@ -25,7 +25,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 		
-		Vector3 translate{ 4.1f,2.6f,0.8f };
+		Vector3 translate{ 4.1f,2.0f,0.8f };
 		Vector3 scale{ 1.5f,5.2f,7.3f };
 		Matrix4x4 translateMatrix = MakeTranslateMatrix(translate);
 		Matrix4x4 scaleMatrix = MakeScaleMatrix(scale);
