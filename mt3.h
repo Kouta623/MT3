@@ -477,5 +477,7 @@ Matrix4x4 MakeAffineMatrix(const Vector3& translate, const Vector3& rotate, cons
 	Matrix4x4 makeRotateYMatrix = RotationY(rotate.y);
 	Matrix4x4 makeRotateZMatrix = RotationZ(rotate.z);
 
-	Matrix4x4 Multiply
+	Matrix4x4 makeRotate = Multiply(makeRotateXMatrix, Multiply(makeRotateYMatrix, makeRotateZMatrix));
+
+	return Matrix4x4(Multiply(MakeScaleMatrix(scale), Multiply(makeRotate, MakeTranslateMatrix(translate))));
 }
