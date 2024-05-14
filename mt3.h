@@ -405,9 +405,9 @@ Matrix4x4 MakeScaleMatrix(const Vector3& scale) {
 
 
 //回転行列
-Matrix4x4 RotationX(float rotate) {
-	float cosA = cosf(rotate);
-	float sinA = sinf(rotate);
+Matrix4x4 RotationX(float radian) {
+	float cosA = cosf(radian);
+	float sinA = sinf(radian);
 
 	Matrix4x4 result={};
 	result.m[0][0] = 1;
@@ -422,9 +422,9 @@ Matrix4x4 RotationX(float rotate) {
 }
 
 
-Matrix4x4 RotationY(float rotate) {
-	float cosA = cosf(rotate);
-	float sinA = sinf(rotate);
+Matrix4x4 RotationY(float radian) {
+	float cosA = cosf(radian);
+	float sinA = sinf(radian);
 
 	Matrix4x4 result={};
 	result.m[0][0] = cosA;
@@ -438,9 +438,9 @@ Matrix4x4 RotationY(float rotate) {
 	return result;
 }
 
-Matrix4x4 RotationZ(float rotate) {
-	float cosA = cosf(rotate);
-	float sinA = sinf(rotate);
+Matrix4x4 RotationZ(float radian) {
+	float cosA = cosf(radian);
+	float sinA = sinf(radian);
 
 	Matrix4x4 result={};
 	result.m[0][0] = cosA;
