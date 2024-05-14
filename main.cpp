@@ -43,7 +43,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		
 		VectorScreenPrintf(0, 0, transformed, "transformed");
-		MatrixScreenPrintf(0, 20, transformMatrix, "transformMatrix");
+		MatrixScreenPrintf(0, 20, translateMatrix, "transformMatrix");
 		MatrixScreenPrintf(0, kRowHeight * 5+20, scaleMatrix, "scaleMatrix");
 
 		///
