@@ -379,7 +379,7 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& translate) {
 
 //拡大縮小行列
 Matrix4x4 MakeScaleMatrix(const Vector3& scale) {
-	Matrix4x4 result={};
+	Matrix4x4 result = {};
 	result.m[0][0] = scale.x;
 	result.m[0][1] = 0.0f;
 	result.m[0][2] = 0.0f;
@@ -409,7 +409,7 @@ Matrix4x4 RotationX(float radian) {
 	float cosA = cosf(radian);
 	float sinA = sinf(radian);
 
-	Matrix4x4 result={};
+	Matrix4x4 result = {};
 	result.m[0][0] = 1;
 	result.m[1][1] = cosA;
 	result.m[1][2] = sinA;
@@ -426,7 +426,7 @@ Matrix4x4 RotationY(float radian) {
 	float cosA = cosf(radian);
 	float sinA = sinf(radian);
 
-	Matrix4x4 result={};
+	Matrix4x4 result = {};
 	result.m[0][0] = cosA;
 	result.m[0][2] = -sinA;
 	result.m[1][1] = 1;
@@ -442,20 +442,20 @@ Matrix4x4 RotationZ(float radian) {
 	float cosA = cosf(radian);
 	float sinA = sinf(radian);
 
-	Matrix4x4 result={};
+	Matrix4x4 result = {};
 	result.m[0][0] = cosA;
 	result.m[0][1] = sinA;
 	result.m[1][0] = -sinA;
 	result.m[1][1] = cosA;
 	result.m[2][2] = 1;
 	result.m[3][3] = 1;
-	
+
 	return result;
 }
 
 //座標変換
 Vector3 Transform(const Vector3& vector, const Matrix4x4& matrix) {
-	Vector3 result={};
+	Vector3 result = {};
 
 	result.x = vector.x * matrix.m[0][0] + vector.y * matrix.m[1][0] + vector.z * matrix.m[2][0] + matrix.m[3][0];
 	result.y = vector.x * matrix.m[0][1] + vector.y * matrix.m[1][1] + vector.z * matrix.m[2][1] + matrix.m[3][1];
@@ -471,16 +471,16 @@ Vector3 Transform(const Vector3& vector, const Matrix4x4& matrix) {
 }
 
 //アフィン変換a
-Matrix4x4 MakeAffineMatrix(const Vector3& translate, const Vector3& rotate, const Vector3& scale) {
+Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate) {
 
 	Matrix4x4 makeRotateXMatrix = RotationX(rotate.x);
 	Matrix4x4 makeRotateYMatrix = RotationY(rotate.y);
 	Matrix4x4 makeRotateZMatrix = RotationZ(rotate.z);
 
-	Matrix4x4 makeRotate = Multiply(makeRotateXMatrix, Multiply(makeRotateYMatrix, makeRotateZMatrix));
+	Matrix4x4 makeRotate = Multiply(Multiply(makeRotateXMatrix, makeRotateYMatrix), makeRotateZMatrix);
 
 	Matrix4x4 matScale = MakeScaleMatrix(scale);
 	Matrix4x4 matTranslate = MakeTranslateMatrix(translate);
 
-	return Matrix4x4(Multiply((Multiply(matScale, makeRotate)), matTranslate));
+	return Multiply(Multiply(matScale, makeRotate), matTranslate);
 }
