@@ -470,7 +470,7 @@ Vector3 Transform(const Vector3& vector, const Matrix4x4& matrix) {
 	return result;
 }
 
-//アフィン変換a
+//アフィン変換
 Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate) {
 
 	Matrix4x4 makeRotateXMatrix = RotationX(rotate.x);
