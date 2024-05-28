@@ -25,16 +25,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓更新処理ここから
 		///
-		Vector3 scale{ 1.2f,0.79f,-2.1f };
-		Vector3 rotate{ 0.4f,1.43f,-0.8f };
-		Vector3 translate{ 2.7f,-4.15f,1.57f };
-		Matrix4x4 worldMatrix = MakeAffineMatrix(scale, rotate, translate);
-
+		Matrix4x4 orthograpicMatrix = MakeOrthograpicMatrix(-160.0f, 160.0f, 200.0f, 300.0f, 0.0f, 1000.0f);
+		Matrix4x4 persectiveFovMatrix = MakePersectiveFovMatrix(0.63f, 1.33f, 0.1f, 1000.0f);
+		Matrix4x4 vewportMatrix = MakeViewportMatrix(100.0f, 200.0f, 600.0f, 300.0f, 0.0f, 1.0f);
 		///
 		/// ↑更新処理ここまで
 		///
+		MatrixScreenPrintf(0, 0, orthograpicMatrix, "orthograpicMatrix");
+		MatrixScreenPrintf(0, kRowHeight*5, persectiveFovMatrix, "persectiveFovMatrix");
+		MatrixScreenPrintf(0, kRowHeight * 10, vewportMatrix, "vewportMatrix");
 
-		MatrixScreenPrintf(0, 0, worldMatrix, "worldMatrix");
 		///
 		/// ↓描画処理ここから
 		///
