@@ -23,6 +23,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Vector3 rotate{};
 	Vector3 translate{};
+
+	Vector3 kLocalvertical[3] =
+	{
+		0.0f,0.5f,0.0f,
+		-0.5f,-0.5f,0.0f,
+		0.5f,-0.5f,0.0f
+	};
+
+	Vector3 Scale = { 1.0f,1.0f,1.0f };
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -35,31 +44,47 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓更新処理ここから
 		///
-		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
-		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.0f,0.0f,0.0f },/*cameraPosition*/);
+		rotate.y+=0.5f;
+		Matrix4x4 worldMatrix = MakeAffineMatrix(Scale, rotate, translate);
+		Matrix4x4 cameraMatrix = MakeAffineMatrix(Scale, { 0.0f,0.0f,0.0f }, { 0.0f,0.0f,-5.0f });
 		Matrix4x4 viewMatrix = Invers(cameraMatrix);
 		Matrix4x4 projectionMatrix = MakePersectiveFovMatrix(0.45f, float(kWindowWith) / float(kWindowHigat), 0.1f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWith), float(kWindowHigat), 0.0f, 1.0f);
 		Vector3 screeVertices[3];
 		for (uint32_t i = 0; i < 3; ++i) {
-			Vector3 ndcVertex=Transform()
+			Vector3 ndcVertex = Transform(kLocalvertical[i], worldViewProjectionMatrix);
+			screeVertices[i] = Transform(ndcVertex, viewportMatrix);
 		}
+
+
+		if (preKeys[DIK_W]) {
+			Scale.z-=0.1f;
+		}
+		if (preKeys[DIK_A]) {
+			translate.x-= 0.1f;
+		}
+		if (preKeys[DIK_S]) {
+			Scale.z+= 0.1f;
+		}
+		if (preKeys[DIK_D]) {
+			translate.x+= 0.1f;
+		}
+		
 
 		///
 		/// ↑更新処理ここまで
 		///
 		
 
-        //クロス積確認用	
-		VectorScreenPrintf(0, 0, cross, "Cross");
+        
 
 		///
 		/// ↓描画処理ここから
 		///
-		
+		Novice::DrawTriangle(int(screeVertices[0].x), int(screeVertices[0].y), int(screeVertices[1].x), int(screeVertices[1].y), int(screeVertices[2].x), int(screeVertices[2].y), RED, kFillModeSolid);
 
-		Vector3 cross = Cross(v1, v2);
+		
 		VectorScreenPrintf(0, 0, cross, "Cross");
 
 		///
