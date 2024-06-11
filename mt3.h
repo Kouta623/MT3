@@ -2,7 +2,7 @@
 #include<assert.h>
 #include <Novice.h>
 #include <stdio.h>
-
+#include <numbers>
 static const int kRowHeight = 20;
 static const int kColumnWidth = 60;
 
@@ -26,6 +26,12 @@ struct Matrix4x4
 	float m[4][4];
 };
 
+struct Sphere
+{
+	Vector3 center;
+	float radius;
+};
+
 void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) {
 	Novice::ScreenPrintf(x, y, "%.02f", vector.x);
 	Novice::ScreenPrintf(x + kColumnWidth, y, "%.02f", vector.y);
@@ -39,7 +45,7 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 	Novice::ScreenPrintf(x, y, "%s", label);
 	for (int row = 0; row < 4; ++row) {
 		for (int column = 0; column < 4; ++column) {
-			Novice::ScreenPrintf(x + column * kColumnWidth, (y + row * kRowHeight)+20, "%6.02f", matrix.m[row][column]);
+			Novice::ScreenPrintf(x + column * kColumnWidth, (y + row * kRowHeight) + 20, "%6.02f", matrix.m[row][column]);
 		}
 	}
 }
@@ -495,8 +501,8 @@ Matrix4x4 MakePersectiveFovMatrix(float fovY, float aspectRatio, float nearClip,
 	Matrix4x4 result = {};
 
 
-	result.m[0][0] = (1.0f / aspectRatio) * 1.0f/tanf(fovY / 2.0f);
-	result.m[1][1] = 1.0f/tanf(fovY / 2.0f);
+	result.m[0][0] = (1.0f / aspectRatio) * 1.0f / tanf(fovY / 2.0f);
+	result.m[1][1] = 1.0f / tanf(fovY / 2.0f);
 	result.m[2][2] = (farClip + nearClip) / (farClip - nearClip);
 	result.m[2][3] = 1.0f;
 	result.m[3][2] = (farClip * nearClip) / -(farClip - nearClip);
@@ -506,22 +512,22 @@ Matrix4x4 MakePersectiveFovMatrix(float fovY, float aspectRatio, float nearClip,
 
 //正射影行列
 Matrix4x4 MakeOrthograpicMatrix(float left, float top, float right, float bottom, float nearClip, float farClip) {
-	
+
 	Matrix4x4 result = {};
 
 	result.m[0][0] = 2.0f / (right - left);
 	result.m[1][1] = 2.0f / (top - bottom);
-	result.m[2][2] =1.0f/(farClip - nearClip);
-	result.m[3][0] = (left+right) / (left-right);
-	result.m[3][1] = (top + bottom) / (bottom-top);
-	result.m[3][2] = nearClip / (nearClip-farClip);
+	result.m[2][2] = 1.0f / (farClip - nearClip);
+	result.m[3][0] = (left + right) / (left - right);
+	result.m[3][1] = (top + bottom) / (bottom - top);
+	result.m[3][2] = nearClip / (nearClip - farClip);
 	result.m[3][3] = 1.0f;
 	return result;
 }
 
 //ビューポート変換行列
 Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, float minDepth, float maxDepth) {
-	
+
 	Matrix4x4 result = {};
 
 
@@ -547,3 +553,69 @@ Vector3 Cross(const Vector3& v1, const Vector3& v2) {
 
 }
 
+
+void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
+	const float kGridHalfWidth = 2.0f;
+	const uint32_t kSubdivision = 10;
+	const float kGridEvery = (kGridHalfWidth * 2.0f) / float(kSubdivision);
+	for (uint32_t xIndex = 0; xIndex <= kSubdivision; ++xIndex) {
+		float x = -kGridHalfWidth + (xIndex * kGridEvery);
+		Vector3 start{ x, 0.0f, -kGridHalfWidth };
+		Vector3 end{ x, 0.0f, kGridHalfWidth };
+		Vector3 startScreen = Transform(Transform(start, viewProjectionMatrix), viewportMatrix);
+		Vector3 endScreen = Transform(Transform(end, viewProjectionMatrix), viewportMatrix);
+		Novice::DrawLine(
+			int(startScreen.x), int(startScreen.y), int(endScreen.x), int(endScreen.y),
+			x == 0.0f ? BLACK : 0xAAAAAAFF);
+	}
+	for (uint32_t zIndex = 0; zIndex <= kSubdivision; ++zIndex) {
+		float z = -kGridHalfWidth + (zIndex * kGridEvery);
+		Vector3 start{ -kGridHalfWidth, 0.0f, z };
+		Vector3 end{ kGridHalfWidth, 0.0f, z };
+		Vector3 startScreen = Transform(Transform(start, viewProjectionMatrix), viewportMatrix);
+		Vector3 endScreen = Transform(Transform(end, viewProjectionMatrix), viewportMatrix);
+		Novice::DrawLine(
+			int(startScreen.x), int(startScreen.y), int(endScreen.x), int(endScreen.y),
+			z == 0.0f ? BLACK : 0xAAAAAAFF);
+	}
+}
+
+
+
+
+
+
+void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix,uint32_t color) {
+	float pi = std::numbers::pi_v<float>;
+	const uint32_t kSubdivision = 12;
+	// 経度分割1つ分の角度
+	const float kLonEvery = pi * 2.0f / float(kSubdivision);
+	// 緯度分割1つ分の角度
+	const float kLatEvery = pi / float(kSubdivision);
+	// 緯度の方向に分割
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
+		float lat = -pi / 2.0f + kLatEvery * latIndex;
+		// 経度の方向に分割しながら線を描く
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
+			float lon = lonIndex * kLonEvery;
+			Vector3 a = {
+			  sphere.center.x + sphere.radius * cosf(lat) * cosf(lon),
+			  sphere.center.y + sphere.radius * sinf(lat),
+			  sphere.center.z + sphere.radius * cosf(lat) * sinf(lon) };
+			Vector3 b = {
+			  sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon),
+			  sphere.center.y + sphere.radius * sinf(lat + kLatEvery),
+			  sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon) };
+			Vector3 c = {
+			  sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery),
+			  sphere.center.y + sphere.radius * sinf(lat),
+			  sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery) };
+			// 線を描く
+			Vector3 screenA = Transform(Transform(a, viewProjectionMatrix), viewportMatrix);
+			Vector3 screenB = Transform(Transform(b, viewProjectionMatrix), viewportMatrix);
+			Vector3 screenC = Transform(Transform(c, viewProjectionMatrix), viewportMatrix);
+			Novice::DrawLine(int(screenA.x), int(screenA.y), int(screenB.x), int(screenB.y), color);
+			Novice::DrawLine(int(screenA.x), int(screenA.y), int(screenC.x), int(screenC.y), color);
+		}
+	}
+}
