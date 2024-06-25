@@ -10,8 +10,6 @@ static const int kWindowWith = 1280;
 static const int kWindowHigat = 720;
 
 
-
-
 struct Vector3 {
 	float x, y, z;
 };
@@ -30,6 +28,24 @@ struct Sphere
 {
 	Vector3 center;
 	float radius;
+};
+
+struct Segment
+{
+	Vector3 origin;
+	Vector3 diff;
+};
+
+struct Line
+{
+	Vector3 origin;
+	Vector3 diff;
+};
+
+struct Ray
+{
+	Vector3 origin;
+	Vector3 diff;
 };
 
 void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) {
@@ -53,15 +69,19 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 
 
 //加算
-Vector3 Add(const Vector3& v1, Vector3& v2) {
+Vector3 Add(const Vector3& v1,const Vector3& v2) {
 	return Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
 
 }
 
+
+
 //減算
-Vector3 Subtract(const Vector3& v1, Vector3& v2) {
+Vector3 Subtract(const Vector3& v1, const Vector3& v2) {
 	return Vector3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
 }
+
+
 
 //スカラー倍
 Vector3 Multiply(float scalar, Vector3& v) {
@@ -86,15 +106,10 @@ float Length(const Vector3& v) {
 
 
 //正規化
-Vector3 Normalize(const Vector3& v) {
-
-	Vector3 result;
-	result.x = v.x / Length(v);
-	result.y = v.y / Length(v);
-	result.z = v.z / Length(v);
-	return result;
-
-
+inline Vector3 Normalize(const Vector3& v) {
+	float v2 = 0.0f;
+	v2 = Length(v);
+	return{ v.x / v2,v.y / v2,v.z / v2 };
 }
 
 
@@ -585,7 +600,7 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 
 
 
-void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix,uint32_t color) {
+void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 	float pi = std::numbers::pi_v<float>;
 	const uint32_t kSubdivision = 12;
 	// 経度分割1つ分の角度
@@ -618,4 +633,33 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			Novice::DrawLine(int(screenA.x), int(screenA.y), int(screenC.x), int(screenC.y), color);
 		}
 	}
+}
+
+//正射影ベクトル
+Vector3 Project(const Vector3& v1, const Vector3& v2) {
+	Vector3 result;
+
+	result.x = Dot(v1, Normalize(v2)) * Normalize(v2).x;
+	result.y = Dot(v1, Normalize(v2)) * Normalize(v2).y;
+	result.z = Dot(v1, Normalize(v2)) * Normalize(v2).z;
+
+	return result;
+}
+//最近接点
+Vector3 ClosestPoint(const Vector3& point, const Segment segment) {
+	
+
+	return Add(Project(Subtract(point, segment.origin), segment.diff), segment.origin);
+
+	
+}
+
+Matrix4x4 MakeViewProjectionMatrix(Vector3 scale, Vector3 rotate, Vector3 translate, Vector3 cameraScale, Vector3 cameraRotate, Vector3 cameraTranslate) {
+	Matrix4x4 worldMatrix = MakeAffineMatrix(scale, rotate, translate);
+	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraScale, cameraRotate, cameraTranslate);
+	Matrix4x4 viewMatrix = Invers(cameraMatrix);
+	Matrix4x4 projectionMatrix = MakePersectiveFovMatrix(0.45f, 720.0f / 1280.0f, 0.1f, 100.0f);
+	MatrixScreenPrintf(0, 0, viewMatrix, "viewprojection");
+	return (Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix)));
+
 }
