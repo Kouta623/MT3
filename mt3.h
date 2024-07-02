@@ -663,3 +663,16 @@ Matrix4x4 MakeViewProjectionMatrix(Vector3 scale, Vector3 rotate, Vector3 transl
 	return (Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix)));
 
 }
+
+//球と球の衝突
+
+bool IsCollision(const Sphere& s1, const Sphere& s2) {
+	float distance = Length(Subtract(s2.center, s1.center));
+	if (distance <= s1.radius + s2.radius) {
+
+		return true;
+
+	}
+	return false;
+}
+
