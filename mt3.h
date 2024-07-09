@@ -683,7 +683,7 @@ bool IsCollision(const Sphere& s1, const Sphere& s2) {
 }
 
 
-//平面
+//平面と球
 bool IsCollision(const Sphere& sphere, const Plane& plane) {
 	
 	if (sphere.radius >= fabsf(Dot(plane.normal, sphere.center) - plane.distance)) {
@@ -722,4 +722,15 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color); 
 	Novice::DrawLine(int(points[3].x), int(points[3].y), int(points[1].x), int(points[1].y), color);
 	Novice::DrawLine(int(points[3].x), int(points[3].y), int(points[0].x), int(points[0].y), color);
+}
+
+//線と平面
+bool IsCollision(const Segment& segment, const Plane& plane) {
+	float dot = Dot(plane.normal, segment.diff);
+	if (dot == 0.0f) {
+		return false;
+	}
+	float t = (plane.distance - Dot(segment.origin, plane.normal)) / dot;
+
+	return t >= 0.0f && t <= 1.0f;
 }
