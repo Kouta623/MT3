@@ -9,7 +9,7 @@ static const int kColumnWidth = 60;
 static const int kWindowWith = 1280;
 static const int kWindowHigat = 720;
 
-
+//-----------------------------------
 struct Vector3 {
 	float x, y, z;
 };
@@ -40,6 +40,7 @@ struct Line
 {
 	Vector3 origin;
 	Vector3 diff;
+
 };
 
 struct Ray
@@ -53,6 +54,30 @@ struct  Plane
 	Vector3 normal;
 	float distance;
 };
+
+struct Triangle
+{
+	Vector3 vertices[3];
+};
+//-----------------------------------
+
+
+//-----------------------------------
+Vector3 operator+(Vector3 num1, Vector3 num2) {
+	num1.x += num2.x;
+	num1.y += num2.y;
+	num1.z += num2.z;
+
+	return num1;
+}
+
+Vector3 operator-(Vector3 num1, Vector3 num2) {
+	num1.x -= num2.x;
+	num1.y -= num2.y;
+	num1.z -= num2.z;
+
+	return num1;
+}
 
 void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) {
 	Novice::ScreenPrintf(x, y, "%.02f", vector.x);
@@ -72,10 +97,8 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 	}
 }
 
-
-
 //加算
-Vector3 Add(const Vector3& v1,const Vector3& v2) {
+Vector3 Add(const Vector3& v1, const Vector3& v2) {
 	return Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
 
 }
@@ -374,6 +397,7 @@ Matrix4x4 MakeIdentity4x4() {
 	result.m[2][2] = 1;
 	result.m[2][3] = 0;
 	result.m[3][0] = 0;
+
 	result.m[3][1] = 0;
 	result.m[3][2] = 0;
 	result.m[3][3] = 1;
@@ -574,6 +598,115 @@ Vector3 Cross(const Vector3& v1, const Vector3& v2) {
 
 }
 
+//正射影ベクトル
+Vector3 Project(const Vector3& v1, const Vector3& v2) {
+	Vector3 result;
+
+	result.x = Dot(v1, Normalize(v2)) * Normalize(v2).x;
+	result.y = Dot(v1, Normalize(v2)) * Normalize(v2).y;
+	result.z = Dot(v1, Normalize(v2)) * Normalize(v2).z;
+
+	return result;
+}
+//最近接点
+Vector3 ClosestPoint(const Vector3& point, const Segment segment) {
+
+
+	return Add(Project(Subtract(point, segment.origin), segment.diff), segment.origin);
+
+
+}
+
+Matrix4x4 MakeViewProjectionMatrix(Vector3 scale, Vector3 rotate, Vector3 translate, Vector3 cameraScale, Vector3 cameraRotate, Vector3 cameraTranslate) {
+	Matrix4x4 worldMatrix = MakeAffineMatrix(scale, rotate, translate);
+	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraScale, cameraRotate, cameraTranslate);
+	Matrix4x4 viewMatrix = Invers(cameraMatrix);
+	Matrix4x4 projectionMatrix = MakePersectiveFovMatrix(0.45f, 720.0f / 1280.0f, 0.1f, 100.0f);
+	MatrixScreenPrintf(0, 0, viewMatrix, "viewprojection");
+	return (Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix)));
+
+}
+//-----------------------------------
+
+
+//-----------------------------------
+//球と球の衝突
+bool IsCollision(const Sphere& s1, const Sphere& s2) {
+	float distance = Length(Subtract(s2.center, s1.center));
+	if (distance <= s1.radius + s2.radius) {
+
+		return true;
+
+	}
+	return false;
+}
+
+//平面と球
+bool IsCollision(const Sphere& sphere, const Plane& plane) {
+
+	if (sphere.radius >= fabsf(Dot(plane.normal, sphere.center) - plane.distance)) {
+
+		return true;
+
+	}
+	return false;
+}
+
+Vector3 Perpendicular(const Vector3& vector) {
+	if (vector.x != 0.0f || vector.y != 0.0f) {
+		return { -vector.y, vector.x, 0.0f };
+	}
+	return { 0.0f,-vector.z,vector.y };
+}
+
+
+//線と平面
+bool IsCollision(const Segment& segment, const Plane& plane) {
+	float dot = Dot(plane.normal, segment.diff);
+	if (dot == 0.0f) {
+		return false;
+	}
+	float t = (plane.distance - Dot(segment.origin, plane.normal)) / dot;
+
+	return t >= 0.0f && t <= 1.0f;
+}
+
+//三角形と線
+bool IsCollision(const Triangle& triangle, const Segment& segmrnt) {
+
+	Plane plane;
+	Vector3 v01 = triangle.vertices[1] - triangle.vertices[0];
+	Vector3 v12 = triangle.vertices[2] - triangle.vertices[1];
+	Vector3 v20 = triangle.vertices[0] - triangle.vertices[2];
+
+	plane.normal = Normalize(Cross(v01, v12));
+	plane.distance = Dot(triangle.vertices[0], plane.normal);
+
+	float t = (plane.distance - Dot(segmrnt.origin, plane.normal)) / Dot(plane.normal, segmrnt.diff);
+
+	Vector3 tb = Multiply(t, segmrnt.diff);
+
+	Vector3 p = segmrnt.origin + tb;
+
+	Vector3 v0p = p - triangle.vertices[0];
+	Vector3 v1p = p - triangle.vertices[1];
+	Vector3 v2p = p - triangle.vertices[2];
+
+	Vector3 cross01 = Cross(v01, v1p);
+	Vector3 cross12 = Cross(v12, v2p);
+	Vector3 cross20 = Cross(v20, v0p);
+
+	if (Dot(cross01, plane.normal) >= 0.0f &&
+		Dot(cross12, plane.normal) >= 0.0f &&
+		Dot(cross20, plane.normal) >= 0.0f) {
+		return true;
+	}
+	return false;
+}
+//-----------------------------------
+
+
+//-----------------------------------
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
 	const float kGridHalfWidth = 2.0f;
@@ -600,9 +733,6 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 			z == 0.0f ? BLACK : 0xAAAAAAFF);
 	}
 }
-
-
-
 
 
 
@@ -641,65 +771,7 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	}
 }
 
-//正射影ベクトル
-Vector3 Project(const Vector3& v1, const Vector3& v2) {
-	Vector3 result;
 
-	result.x = Dot(v1, Normalize(v2)) * Normalize(v2).x;
-	result.y = Dot(v1, Normalize(v2)) * Normalize(v2).y;
-	result.z = Dot(v1, Normalize(v2)) * Normalize(v2).z;
-
-	return result;
-}
-//最近接点
-Vector3 ClosestPoint(const Vector3& point, const Segment segment) {
-	
-
-	return Add(Project(Subtract(point, segment.origin), segment.diff), segment.origin);
-
-	
-}
-
-Matrix4x4 MakeViewProjectionMatrix(Vector3 scale, Vector3 rotate, Vector3 translate, Vector3 cameraScale, Vector3 cameraRotate, Vector3 cameraTranslate) {
-	Matrix4x4 worldMatrix = MakeAffineMatrix(scale, rotate, translate);
-	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraScale, cameraRotate, cameraTranslate);
-	Matrix4x4 viewMatrix = Invers(cameraMatrix);
-	Matrix4x4 projectionMatrix = MakePersectiveFovMatrix(0.45f, 720.0f / 1280.0f, 0.1f, 100.0f);
-	MatrixScreenPrintf(0, 0, viewMatrix, "viewprojection");
-	return (Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix)));
-
-}
-
-//球と球の衝突
-
-bool IsCollision(const Sphere& s1, const Sphere& s2) {
-	float distance = Length(Subtract(s2.center, s1.center));
-	if (distance <= s1.radius + s2.radius) {
-
-		return true;
-
-	}
-	return false;
-}
-
-
-//平面と球
-bool IsCollision(const Sphere& sphere, const Plane& plane) {
-	
-	if (sphere.radius >= fabsf(Dot(plane.normal, sphere.center) - plane.distance)) {
-		
-		return true;
-
-	}
-	return false;
-}
-	
-Vector3 Perpendicular(const Vector3& vector) {
-	if (vector.x != 0.0f || vector.y != 0.0f) {
-		return { -vector.y, vector.x, 0.0f } ;
-	}
-	return { 0.0f,-vector.z,vector.y };
-}
 
 void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 
@@ -707,8 +779,8 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	Vector3 perpendistance[4];
 
 	perpendistance[0] = Normalize(Perpendicular(plane.normal));
-	perpendistance[1]={-perpendistance[0].x,-perpendistance[0].y,-perpendistance[0].z};
-	perpendistance[2]=Cross(plane.normal, perpendistance[0]);
+	perpendistance[1] = { -perpendistance[0].x,-perpendistance[0].y,-perpendistance[0].z };
+	perpendistance[2] = Cross(plane.normal, perpendistance[0]);
 	perpendistance[3] = { -perpendistance[2].x,-perpendistance[2].y,perpendistance[2].z };
 
 	Vector3 points[4];
@@ -719,18 +791,22 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 		points[index] = Transform(Transform(point, viewProjectionMatrix), viewportMatrix);
 	}
 	Novice::DrawLine(int(points[0].x), int(points[0].y), int(points[2].x), int(points[2].y), color);
-	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color); 
+	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color);
 	Novice::DrawLine(int(points[3].x), int(points[3].y), int(points[1].x), int(points[1].y), color);
 	Novice::DrawLine(int(points[3].x), int(points[3].y), int(points[0].x), int(points[0].y), color);
 }
 
-//線と平面
-bool IsCollision(const Segment& segment, const Plane& plane) {
-	float dot = Dot(plane.normal, segment.diff);
-	if (dot == 0.0f) {
-		return false;
-	}
-	float t = (plane.distance - Dot(segment.origin, plane.normal)) / dot;
 
-	return t >= 0.0f && t <= 1.0f;
+void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMattrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+
+	Vector3 start[3];
+	Vector3 end[3];
+
+	for (uint32_t i = 0; i < 3; i++) {
+		start[i] = Transform(Transform(triangle.vertices[i], viewProjectionMattrix), viewportMatrix);
+		end[i] = Transform(Transform(triangle.vertices[(i + 1) % 3], viewProjectionMattrix), viewportMatrix);
+		Novice::DrawLine(int(start[i].x), int(start[i].y), int(end[i].x), int(end[i].y), color);
+	}
 }
+//-----------------------------------
+
