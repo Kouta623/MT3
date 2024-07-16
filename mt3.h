@@ -1,12 +1,13 @@
-﻿﻿#include<math.h>
+﻿#include<math.h>
 #include<assert.h>
 #include <Novice.h>
 #include <stdio.h>
-
+#include <numbers>
 static const int kRowHeight = 20;
 static const int kColumnWidth = 60;
 
-
+static const int kWindowWith = 1280;
+static const int kWindowHigat = 720;
 
 
 struct Vector3 {
@@ -23,6 +24,36 @@ struct Matrix4x4
 	float m[4][4];
 };
 
+struct Sphere
+{
+	Vector3 center;
+	float radius;
+};
+
+struct Segment
+{
+	Vector3 origin;
+	Vector3 diff;
+};
+
+struct Line
+{
+	Vector3 origin;
+	Vector3 diff;
+};
+
+struct Ray
+{
+	Vector3 origin;
+	Vector3 diff;
+};
+
+struct  Plane
+{
+	Vector3 normal;
+	float distance;
+};
+
 void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) {
 	Novice::ScreenPrintf(x, y, "%.02f", vector.x);
 	Novice::ScreenPrintf(x + kColumnWidth, y, "%.02f", vector.y);
@@ -32,9 +63,11 @@ void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) 
 }
 
 void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label) {
+
+	Novice::ScreenPrintf(x, y, "%s", label);
 	for (int row = 0; row < 4; ++row) {
 		for (int column = 0; column < 4; ++column) {
-			Novice::ScreenPrintf(x + column * kColumnWidth, y + row * kRowHeight, "%6.02f", matrix.m[row][column], label);
+			Novice::ScreenPrintf(x + column * kColumnWidth, (y + row * kRowHeight) + 20, "%6.02f", matrix.m[row][column]);
 		}
 	}
 }
@@ -42,18 +75,22 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 
 
 //加算
-Vector3 Add(const Vector3& v1, Vector3& v2) {
+Vector3 Add(const Vector3& v1, const Vector3& v2) {
 	return Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
 
 }
 
+
+
 //減算
-Vector3 Subtract(const Vector3& v1, Vector3& v2) {
+Vector3 Subtract(const Vector3& v1, const Vector3& v2) {
 	return Vector3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
 }
 
+
+
 //スカラー倍
-Vector3 Multiply(float scalar, Vector3& v) {
+Vector3 Multiply(float scalar, const Vector3& v) {
 
 	Vector3 result;
 	result.x = scalar * v.x;
@@ -75,15 +112,10 @@ float Length(const Vector3& v) {
 
 
 //正規化
-Vector3 Normalize(const Vector3& v) {
-
-	Vector3 result;
-	result.x = v.x / Length(v);
-	result.y = v.y / Length(v);
-	result.z = v.z / Length(v);
-	return result;
-
-
+inline Vector3 Normalize(const Vector3& v) {
+	float v2 = 0.0f;
+	v2 = Length(v);
+	return{ v.x / v2,v.y / v2,v.z / v2 };
 }
 
 
@@ -405,9 +437,9 @@ Matrix4x4 MakeScaleMatrix(const Vector3& scale) {
 
 
 //回転行列
-Matrix4x4 RotationX(float rotate) {
-	float cosA = cosf(rotate);
-	float sinA = sinf(rotate);
+Matrix4x4 RotationX(float radian) {
+	float cosA = cosf(radian);
+	float sinA = sinf(radian);
 
 	Matrix4x4 result = {};
 	result.m[0][0] = 1;
@@ -422,9 +454,9 @@ Matrix4x4 RotationX(float rotate) {
 }
 
 
-Matrix4x4 RotationY(float rotate) {
-	float cosA = cosf(rotate);
-	float sinA = sinf(rotate);
+Matrix4x4 RotationY(float radian) {
+	float cosA = cosf(radian);
+	float sinA = sinf(radian);
 
 	Matrix4x4 result = {};
 	result.m[0][0] = cosA;
@@ -438,9 +470,9 @@ Matrix4x4 RotationY(float rotate) {
 	return result;
 }
 
-Matrix4x4 RotationZ(float rotate) {
-	float cosA = cosf(rotate);
-	float sinA = sinf(rotate);
+Matrix4x4 RotationZ(float radian) {
+	float cosA = cosf(radian);
+	float sinA = sinf(radian);
 
 	Matrix4x4 result = {};
 	result.m[0][0] = cosA;
@@ -470,17 +502,235 @@ Vector3 Transform(const Vector3& vector, const Matrix4x4& matrix) {
 	return result;
 }
 
-//アフィン変換a
-Matrix4x4 MakeAffineMatrix(const Vector3& translate, const Vector3& rotate, const Vector3& scale) {
+//アフィン変換
+Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate) {
 
 	Matrix4x4 makeRotateXMatrix = RotationX(rotate.x);
 	Matrix4x4 makeRotateYMatrix = RotationY(rotate.y);
 	Matrix4x4 makeRotateZMatrix = RotationZ(rotate.z);
 
-	Matrix4x4 makeRotate = Multiply(makeRotateXMatrix, Multiply(makeRotateYMatrix, makeRotateZMatrix));
+	Matrix4x4 makeRotate = Multiply(Multiply(makeRotateXMatrix, makeRotateYMatrix), makeRotateZMatrix);
 
 	Matrix4x4 matScale = MakeScaleMatrix(scale);
 	Matrix4x4 matTranslate = MakeTranslateMatrix(translate);
 
-	return Matrix4x4(Multiply((Multiply(matScale, makeRotate)), matTranslate));
+	return Multiply(Multiply(matScale, makeRotate), matTranslate);
+}
+
+//透視投影
+Matrix4x4 MakePersectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip) {
+	Matrix4x4 result = {};
+
+
+	result.m[0][0] = (1.0f / aspectRatio) * 1.0f / tanf(fovY / 2.0f);
+	result.m[1][1] = 1.0f / tanf(fovY / 2.0f);
+	result.m[2][2] = (farClip + nearClip) / (farClip - nearClip);
+	result.m[2][3] = 1.0f;
+	result.m[3][2] = (farClip * nearClip) / -(farClip - nearClip);
+
+	return result;
+}
+
+//正射影行列
+Matrix4x4 MakeOrthograpicMatrix(float left, float top, float right, float bottom, float nearClip, float farClip) {
+
+	Matrix4x4 result = {};
+
+	result.m[0][0] = 2.0f / (right - left);
+	result.m[1][1] = 2.0f / (top - bottom);
+	result.m[2][2] = 1.0f / (farClip - nearClip);
+	result.m[3][0] = (left + right) / (left - right);
+	result.m[3][1] = (top + bottom) / (bottom - top);
+	result.m[3][2] = nearClip / (nearClip - farClip);
+	result.m[3][3] = 1.0f;
+	return result;
+}
+
+//ビューポート変換行列
+Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, float minDepth, float maxDepth) {
+
+	Matrix4x4 result = {};
+
+
+	result.m[0][0] = width / 2.0f;
+	result.m[1][1] = -(height / 2.0f);
+	result.m[2][2] = (maxDepth - minDepth);
+	result.m[3][0] = left + (width / 2.0f);
+	result.m[3][1] = top + (height / 2.0f);
+	result.m[3][2] = minDepth;
+	result.m[3][3] = 1.0f;
+
+	return result;
+}
+
+//クロス積
+Vector3 Cross(const Vector3& v1, const Vector3& v2) {
+
+	Vector3 result;
+	result.x = v1.y * v2.z - v1.z * v2.y;
+	result.y = v1.z * v2.x - v1.x * v2.z;
+	result.z = v1.x * v2.y - v1.y * v2.x;
+	return result;
+
+}
+
+
+void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
+	const float kGridHalfWidth = 2.0f;
+	const uint32_t kSubdivision = 10;
+	const float kGridEvery = (kGridHalfWidth * 2.0f) / float(kSubdivision);
+	for (uint32_t xIndex = 0; xIndex <= kSubdivision; ++xIndex) {
+		float x = -kGridHalfWidth + (xIndex * kGridEvery);
+		Vector3 start{ x, 0.0f, -kGridHalfWidth };
+		Vector3 end{ x, 0.0f, kGridHalfWidth };
+		Vector3 startScreen = Transform(Transform(start, viewProjectionMatrix), viewportMatrix);
+		Vector3 endScreen = Transform(Transform(end, viewProjectionMatrix), viewportMatrix);
+		Novice::DrawLine(
+			int(startScreen.x), int(startScreen.y), int(endScreen.x), int(endScreen.y),
+			x == 0.0f ? BLACK : 0xAAAAAAFF);
+	}
+	for (uint32_t zIndex = 0; zIndex <= kSubdivision; ++zIndex) {
+		float z = -kGridHalfWidth + (zIndex * kGridEvery);
+		Vector3 start{ -kGridHalfWidth, 0.0f, z };
+		Vector3 end{ kGridHalfWidth, 0.0f, z };
+		Vector3 startScreen = Transform(Transform(start, viewProjectionMatrix), viewportMatrix);
+		Vector3 endScreen = Transform(Transform(end, viewProjectionMatrix), viewportMatrix);
+		Novice::DrawLine(
+			int(startScreen.x), int(startScreen.y), int(endScreen.x), int(endScreen.y),
+			z == 0.0f ? BLACK : 0xAAAAAAFF);
+	}
+}
+
+
+
+
+
+
+void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	float pi = std::numbers::pi_v<float>;
+	const uint32_t kSubdivision = 12;
+	// 経度分割1つ分の角度
+	const float kLonEvery = pi * 2.0f / float(kSubdivision);
+	// 緯度分割1つ分の角度
+	const float kLatEvery = pi / float(kSubdivision);
+	// 緯度の方向に分割
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
+		float lat = -pi / 2.0f + kLatEvery * latIndex;
+		// 経度の方向に分割しながら線を描く
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
+			float lon = lonIndex * kLonEvery;
+			Vector3 a = {
+			  sphere.center.x + sphere.radius * cosf(lat) * cosf(lon),
+			  sphere.center.y + sphere.radius * sinf(lat),
+			  sphere.center.z + sphere.radius * cosf(lat) * sinf(lon) };
+			Vector3 b = {
+			  sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon),
+			  sphere.center.y + sphere.radius * sinf(lat + kLatEvery),
+			  sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon) };
+			Vector3 c = {
+			  sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery),
+			  sphere.center.y + sphere.radius * sinf(lat),
+			  sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery) };
+			// 線を描く
+			Vector3 screenA = Transform(Transform(a, viewProjectionMatrix), viewportMatrix);
+			Vector3 screenB = Transform(Transform(b, viewProjectionMatrix), viewportMatrix);
+			Vector3 screenC = Transform(Transform(c, viewProjectionMatrix), viewportMatrix);
+			Novice::DrawLine(int(screenA.x), int(screenA.y), int(screenB.x), int(screenB.y), color);
+			Novice::DrawLine(int(screenA.x), int(screenA.y), int(screenC.x), int(screenC.y), color);
+		}
+	}
+}
+
+//正射影ベクトル
+Vector3 Project(const Vector3& v1, const Vector3& v2) {
+	Vector3 result;
+
+	result.x = Dot(v1, Normalize(v2)) * Normalize(v2).x;
+	result.y = Dot(v1, Normalize(v2)) * Normalize(v2).y;
+	result.z = Dot(v1, Normalize(v2)) * Normalize(v2).z;
+
+	return result;
+}
+//最近接点
+Vector3 ClosestPoint(const Vector3& point, const Segment segment) {
+
+
+	return Add(Project(Subtract(point, segment.origin), segment.diff), segment.origin);
+
+
+}
+
+Matrix4x4 MakeViewProjectionMatrix(Vector3 scale, Vector3 rotate, Vector3 translate, Vector3 cameraScale, Vector3 cameraRotate, Vector3 cameraTranslate) {
+	Matrix4x4 worldMatrix = MakeAffineMatrix(scale, rotate, translate);
+	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraScale, cameraRotate, cameraTranslate);
+	Matrix4x4 viewMatrix = Invers(cameraMatrix);
+	Matrix4x4 projectionMatrix = MakePersectiveFovMatrix(0.45f, 720.0f / 1280.0f, 0.1f, 100.0f);
+	MatrixScreenPrintf(0, 0, viewMatrix, "viewprojection");
+	return (Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix)));
+
+}
+
+//球と球の衝突
+
+bool IsCollision(const Sphere& s1, const Sphere& s2) {
+	float distance = Length(Subtract(s2.center, s1.center));
+	if (distance <= s1.radius + s2.radius) {
+
+		return true;
+
+	}
+	return false;
+}
+
+
+//平面と球
+bool IsCollision(const Sphere& sphere, const Plane& plane) {
+
+	if (sphere.radius >= fabsf(Dot(plane.normal, sphere.center) - plane.distance)) {
+
+		return true;
+
+	}
+	return false;
+}
+
+Vector3 Perpendicular(const Vector3& vector) {
+	if (vector.x != 0.0f || vector.y != 0.0f) {
+		return { -vector.y, vector.x, 0.0f };
+	}
+	return { 0.0f,-vector.z,vector.y };
+}
+
+void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+
+	Vector3 center = Multiply(plane.distance, plane.normal);
+	Vector3 perpendistance[4];
+
+	perpendistance[0] = Normalize(Perpendicular(plane.normal));
+	perpendistance[1] = { -perpendistance[0].x,-perpendistance[0].y,-perpendistance[0].z };
+	perpendistance[2] = Cross(plane.normal, perpendistance[0]);
+	perpendistance[3] = { -perpendistance[2].x,-perpendistance[2].y,perpendistance[2].z };
+
+	Vector3 points[4];
+	for (int32_t index = 0; index < 4; index++)
+	{
+		Vector3 extend = Multiply(2.0f, perpendistance[index]);
+		Vector3 point = Add(center, extend);
+		points[index] = Transform(Transform(point, viewProjectionMatrix), viewportMatrix);
+	}
+	Novice::DrawLine(int(points[0].x), int(points[0].y), int(points[2].x), int(points[2].y), color);
+	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color);
+	Novice::DrawLine(int(points[3].x), int(points[3].y), int(points[1].x), int(points[1].y), color);
+	Novice::DrawLine(int(points[3].x), int(points[3].y), int(points[0].x), int(points[0].y), color);
+}
+
+//線と平面
+bool IsCollision(const Segment& segment, const Plane& plane) {
+	float dot = Dot(plane.normal, segment.diff);
+	if (dot == 0.0f) {
+		return false;
+	}
+	float t = (plane.distance - Dot(segment.origin, plane.normal)) / dot;
+
+	return t >= 0.0f && t <= 1.0f;
 }
