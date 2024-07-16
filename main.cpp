@@ -34,11 +34,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↑更新処理ここまで
 		///
 
-		MatrixScreenPrintf(0, 0, worldMatrix, "worldMatrix");
 		///
 		/// ↓描画処理ここから
 		///
 		
+		MatrixScreenPrintf(0, 0, worldMatrix, "worldMatrix");
 
 
 		///
