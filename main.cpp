@@ -26,7 +26,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Segment segmrnt;
 	segmrnt.diff = { 0.45f,0.78f,0.0f };
 	segmrnt.origin = { 1.0f,0.58f,0.0f };
-	
+
 
 	Vector3 rotate{};
 	Vector3 translate{};
@@ -67,7 +67,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
-		
+
 		SegmentDiff = Transform(Transform(segmrnt.diff, viewProjectionMatrix), viewportMatrix);
 		SegmentOrigin = Transform(Transform(segmrnt.origin, viewProjectionMatrix), viewportMatrix);
 		///
