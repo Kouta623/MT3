@@ -24,20 +24,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓更新処理ここから
 		///
-		
-		Vector3 translate{ 4.1f,2.0f,0.8f };
-		Vector3 scale{ 1.5f,5.2f,7.3f };
-		Matrix4x4 translateMatrix = MakeTranslateMatrix(translate);
-		Matrix4x4 scaleMatrix = MakeScaleMatrix(scale);
-		Vector3 point{ 2.3f,3.8f,1.4f };
-		Matrix4x4 transformMatrix = {
-			1.0f,2.0f,3.0f,4.0f,
-			3.0f,1.0f,1.0f,2.0f,
-			1.0f,4.0f,2.0f,3.0f,
-			2.0f,2.0f,1.0f,3.0f
-		};
-		Vector3 transformed = Transform(point, transformMatrix);
 
+		Matrix4x4 worldMatrix = MakeAffineMatrix(Scale, rotate, translate);
+		Matrix4x4 cameraMatrix = MakeAffineMatrix(Scale, cameraRotato, cameraTranslate);
+		Matrix4x4 viewMatrix = Invers(cameraMatrix);
+		Matrix4x4 projectionMatrix = MakePersectiveFovMatrix(0.45f, float(kWindowWith) / float(kWindowHigat), 0.1f, 100.0f);
+		Matrix4x4 viewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWith), float(kWindowHigat), 0.0f, 1.0f);
+
+
+
+		ImGui::Begin("Window");
+		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
+		ImGui::DragFloat3("CameraRotato", &cameraRotato.x, 0.01f);
+		ImGui::DragFloat3("segmrnt.diff", &segmrnt.diff.x, 0.01f);
+		ImGui::DragFloat("segmrnt.origin", &segmrnt.origin.x, 0.01f);
+		ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
+		ImGui::DragFloat("Plane.distance", &plane.distance, 0.01f);
+
+		ImGui::End();
+
+		plane.normal = Normalize(plane.normal);
+		
+		SegmentDiff = Transform(Transform(segmrnt.diff, viewProjectionMatrix), viewportMatrix);
+		SegmentOrigin = Transform(Transform(segmrnt.origin, viewProjectionMatrix), viewportMatrix);
+		///
 		///
 		/// ↑更新処理ここまで
 		///
