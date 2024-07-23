@@ -59,6 +59,13 @@ struct Triangle
 {
 	Vector3 vertices[3];
 };
+
+struct AABB
+{
+	Vector3 min;
+	Vector3 max;
+};
+
 //-----------------------------------
 
 
@@ -622,7 +629,7 @@ Matrix4x4 MakeViewProjectionMatrix(Vector3 scale, Vector3 rotate, Vector3 transl
 	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraScale, cameraRotate, cameraTranslate);
 	Matrix4x4 viewMatrix = Invers(cameraMatrix);
 	Matrix4x4 projectionMatrix = MakePersectiveFovMatrix(0.45f, 720.0f / 1280.0f, 0.1f, 100.0f);
-	MatrixScreenPrintf(0, 0, viewMatrix, "viewprojection");
+	//MatrixScreenPrintf(0, 0, viewMatrix, "viewprojection");
 	return (Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix)));
 
 }
@@ -702,6 +709,19 @@ bool IsCollision(const Triangle& triangle, const Segment& segmrnt) {
 		return true;
 	}
 	return false;
+}
+
+//aabbとaabb
+bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
+
+	if ((aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x) &&
+		(aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y) &&
+		(aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z)) {
+		return true;
+	}
+
+	return false;
+
 }
 //-----------------------------------
 
@@ -805,6 +825,41 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMattr
 	for (uint32_t i = 0; i < 3; i++) {
 		start[i] = Transform(Transform(triangle.vertices[i], viewProjectionMattrix), viewportMatrix);
 		end[i] = Transform(Transform(triangle.vertices[(i + 1) % 3], viewProjectionMattrix), viewportMatrix);
+		Novice::DrawLine(int(start[i].x), int(start[i].y), int(end[i].x), int(end[i].y), color);
+	}
+}
+
+
+void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4 viewportMatrix, uint32_t color) {
+	Vector3 end[12]{};
+	Vector3 start[12]{};
+
+	start[0] = Transform(Transform(aabb.min, viewProjectionMatrix), viewportMatrix);
+	end[0] = Transform(Transform({ aabb.min.x, aabb.min.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	start[1] = Transform(Transform(aabb.min, viewProjectionMatrix), viewportMatrix);
+	end[1] = Transform(Transform({ aabb.min.x, aabb.max.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	start[2] = Transform(Transform({ aabb.min.x, aabb.max.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	end[2] = Transform(Transform({ aabb.min.x, aabb.max.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	start[3] = Transform(Transform({ aabb.min.x, aabb.max.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	end[3] = Transform(Transform({ aabb.min.x, aabb.min.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	start[4] = Transform(Transform({ aabb.min.x, aabb.min.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	end[4] = Transform(Transform({ aabb.max.x, aabb.min.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	start[5] = Transform(Transform(aabb.min, viewProjectionMatrix), viewportMatrix);
+	end[5] = Transform(Transform({ aabb.max.x, aabb.min.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	start[6] = Transform(Transform({ aabb.min.x, aabb.max.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	end[6] = Transform(Transform({ aabb.max.x, aabb.max.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	start[7] = Transform(Transform({ aabb.min.x, aabb.max.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	end[7] = Transform(Transform({ aabb.max.x, aabb.max.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	start[8] = Transform(Transform(aabb.max, viewProjectionMatrix), viewportMatrix);
+	end[8] = Transform(Transform({ aabb.max.x, aabb.max.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	start[9] = Transform(Transform({ aabb.max.x, aabb.max.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	end[9] = Transform(Transform({ aabb.max.x, aabb.min.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	start[10] = Transform(Transform({ aabb.max.x, aabb.min.y, aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	end[10] = Transform(Transform({ aabb.max.x, aabb.min.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	start[11] = Transform(Transform({ aabb.max.x, aabb.min.y, aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	end[11] = Transform(Transform(aabb.max, viewProjectionMatrix), viewportMatrix);
+
+	for (uint32_t i = 0; i < 12; i++) {
 		Novice::DrawLine(int(start[i].x), int(start[i].y), int(end[i].x), int(end[i].y), color);
 	}
 }
