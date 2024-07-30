@@ -19,9 +19,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 cameraTranslate{ 0.0f,0.0f,-10.0f };
 	Vector3 cameraRotato{ 0.0f,0.0f,0.0f };
 
-	Sphere sphere;
-	sphere.center = { 0.0f, 0.0f, 0.0f };
-	sphere.radius = 0.5;
+	Segment segmrnt;
+	segmrnt.diff = { 0.45f,0.78f,0.0f };
+	segmrnt.origin = { 1.0f,0.58f,0.0f };
+
 
 	AABB aabb{
 				.min{-0.5f, -0.5f, -0.5f},
@@ -31,7 +32,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 translate{};
 	Vector3 Scale = { 1.0f,1.0f,1.0f };
 
-
+	Vector3 start{};
+	Vector3 end{};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -54,20 +56,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
-		ImGui::DragFloat3("sphere.center", &sphere.center.x, 0.01f);
-		ImGui::DragFloat("sphere.radius", &sphere.radius, 0.01f);
+		ImGui::DragFloat3("sphere.center", &segmrnt.diff.x, 0.01f);
+		ImGui::DragFloat("sphere.origin", &segmrnt.origin.x, 0.01f);
 		ImGui::DragFloat3("aabb.min", &aabb.min.x, 0.01f);
 		ImGui::DragFloat3("aabb.max", &aabb.max.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &cameraRotato.x, 0.01f);
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 
-		aabb.min.x = (std::min)(aabb.min.x, aabb.max.x);
-		aabb.max.x = (std::max)(aabb.min.x, aabb.max.x);
-		aabb.min.y = (std::min)(aabb.min.y, aabb.max.y);
-		aabb.max.y = (std::max)(aabb.min.y, aabb.max.y);
-		aabb.min.z = (std::min)(aabb.min.z, aabb.max.z);
-		aabb.max.z = (std::max)(aabb.min.z, aabb.max.z);
-
+		start = Transform(Transform(segmrnt.diff, viewProjectionMatrix), viewportMatrix);
+		end = Transform(Transform(segmrnt.origin, viewProjectionMatrix), viewportMatrix);
 		///
 		///
 		/// ↑更新処理ここまで
@@ -84,12 +81,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, WHITE);
+		Novice::DrawLine((int)start.x, (int)start.y, (int)end.x, (int)end.y, WHITE);
 		DrawAABB(aabb, viewProjectionMatrix, viewportMatrix, WHITE);
 
 
-		if (IsCollision(aabb, sphere)) {
-			DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, RED);
+		if (IsCollision(aabb, segmrnt)) {
+			Novice::DrawLine((int)start.x, (int)start.y, (int)end.x, (int)end.y, RED);
+
 		}
 
 
