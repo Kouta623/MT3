@@ -16,29 +16,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-
-	AABB aabb{
-			.min{-0.5f, -0.5f, -0.5f},
-			.max{0.0f, 0.0f, 0.0f},
-	};
+	Vector3 cameraTranslate{ 0.0f,0.0f,-10.0f };
+	Vector3 cameraRotato{ 0.0f,0.0f,0.0f };
 
 	Sphere sphere;
 	sphere.center = { 0.0f, 0.0f, 0.0f };
 	sphere.radius = 0.5;
 
-
-
-	Vector3 rotate = {};
-	Vector3 translate = {};
-	Vector3 cameraRotate = { 0.0f, 0.0f, 0.0f };
-	Vector3 cameraTranslate = { 0.0f, 0.0f, -9.49f };
-	Vector3 cameraPosition = { 0,0,-5.0f };
-
-	Vector3 start{};
-	Vector3 end{};
-
-	Matrix4x4 viewProjectionMatrix = {};
-	Matrix4x4 viewportMatrix = {};
+	AABB aabb{
+				.min{-0.5f, -0.5f, -0.5f},
+				.max{0.0f, 0.0f, 0.0f},
+	};
+	Vector3 rotate{};
+	Vector3 translate{};
+	Vector3 Scale = { 1.0f,1.0f,1.0f };
 
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -54,15 +45,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
-		viewProjectionMatrix = MakeViewProjectionMatrix({ 1, 1, 1 }, rotate, translate, { 1, 1, 1 }, cameraRotate, cameraTranslate);
-		viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWith), float(kWindowHigat), 0.0f, 1.0f);
+		Matrix4x4 worldMatrix = MakeAffineMatrix(Scale, rotate, translate);
+		Matrix4x4 cameraMatrix = MakeAffineMatrix(Scale, cameraRotato, cameraTranslate);
+		Matrix4x4 viewMatrix = Invers(cameraMatrix);
+		Matrix4x4 projectionMatrix = MakePersectiveFovMatrix(0.45f, float(kWindowWith) / float(kWindowHigat), 0.1f, 100.0f);
+		Matrix4x4 viewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWith), float(kWindowHigat), 0.0f, 1.0f);
+
 
 
 		ImGui::DragFloat3("sphere.center", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("sphere.radius", &sphere.radius, 0.01f);
 		ImGui::DragFloat3("aabb.min", &aabb.min.x, 0.01f);
 		ImGui::DragFloat3("aabb.max", &aabb.max.x, 0.01f);
-		ImGui::DragFloat3("cameraRotate", &cameraRotate.x, 0.01f);
+		ImGui::DragFloat3("cameraRotate", &cameraRotato.x, 0.01f);
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 
 		aabb.min.x = (std::min)(aabb.min.x, aabb.max.x);
@@ -71,8 +67,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		aabb.max.y = (std::max)(aabb.min.y, aabb.max.y);
 		aabb.min.z = (std::min)(aabb.min.z, aabb.max.z);
 		aabb.max.z = (std::max)(aabb.min.z, aabb.max.z);
-		
 
+		///
 		///
 		/// ↑更新処理ここまで
 		///
@@ -85,14 +81,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 
+
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
-		DrawAABB(aabb, viewProjectionMatrix, viewportMatrix, WHITE);
+
 		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, WHITE);
-	
+		DrawAABB(aabb, viewProjectionMatrix, viewportMatrix, WHITE);
+
+
 		if (IsCollision(aabb, sphere)) {
 			DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, RED);
 		}
-		
+
+
+
+
+
 		///
 		/// ↑描画処理ここまで
 		///
