@@ -1,8 +1,14 @@
-﻿#include<math.h>
-#include<assert.h>
+﻿#define _USE_MATH_DEFINES
+#include <math.h>
 #include <Novice.h>
-#include <stdio.h>
-#include <numbers>
+#include <assert.h>
+#include <cmath>
+#include "Vector3.h"
+#include <imgui.h>
+#include <algorithm>
+#include<numbers>
+
+
 static const int kRowHeight = 20;
 static const int kColumnWidth = 60;
 
@@ -10,9 +16,9 @@ static const int kWindowWith = 1280;
 static const int kWindowHigat = 720;
 
 //-----------------------------------
-struct Vector3 {
-	float x, y, z;
-};
+//struct Vector3 {
+//	float x, y, z;
+//};
 
 struct Matrix3x3
 {
@@ -723,6 +729,20 @@ bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
 	return false;
 
 }
+
+//aabbと球
+bool IsCollision(const AABB& aabb, const Sphere& sphere) {
+	
+	Vector3 closestPoint{ std::clamp(sphere.center.x, aabb.min.x, aabb.max.x),
+						std::clamp(sphere.center.y, aabb.min.y, aabb.max.y),
+						std::clamp(sphere.center.z, aabb.min.z, aabb.max.z) };	
+	float distance = Length(closestPoint - sphere.center);
+	if (distance <= sphere.radius) {
+		return true;
+	}
+
+	return false;
+}
 //-----------------------------------
 
 
@@ -863,5 +883,6 @@ void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Mat
 		Novice::DrawLine(int(start[i].x), int(start[i].y), int(end[i].x), int(end[i].y), color);
 	}
 }
+
 //-----------------------------------
 
